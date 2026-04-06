@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { supabase } from './lib/supabaseClient'
 import './App.css'
 
+type Todo = {
+  id: number
+  text: string
+}
+
 function App() {
-  const [todos, setTodos] = useState([])
+  const [todos, setTodos] = useState<Todo[]>([])
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchTodos()
-  }, [])
 
   async function fetchTodos() {
     setLoading(true)
@@ -21,12 +22,16 @@ function App() {
     if (error) {
       console.error('Error fetching todos:', error)
     } else {
-      setTodos(data)
+      setTodos((data ?? []) as Todo[])
     }
     setLoading(false)
   }
 
-  const handleSubmit = async (e) => {
+  useEffect(() => {
+    fetchTodos()
+  }, [])
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!inputValue.trim()) return
 
@@ -38,12 +43,14 @@ function App() {
     if (error) {
       console.error('Error adding todo:', error)
     } else {
-      setTodos([...todos, data[0]])
+      if (data?.[0]) {
+        setTodos([...todos, data[0] as Todo])
+      }
       setInputValue('')
     }
   }
 
-  const deleteTodo = async (id) => {
+  const deleteTodo = async (id: number) => {
     const { error } = await supabase
       .from('todos')
       .delete()
